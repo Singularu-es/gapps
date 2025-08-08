@@ -33,7 +33,8 @@ images:
             POSTGRES_HOST=${_POSTGRES_HOST},\
             POSTGRES_PASSWORD=${_POSTGRES_PASSWORD},\
             POSTGRES_DB=${_POSTGRES_DB},\
-            GUNICORN_WORKERS=${_GUNICORN_WORKERS}
+            GUNICORN_WORKERS=${_GUNICORN_WORKERS},\
+            PORT=${_PORT}
 
 # 4) Timeout ampliado para builds pesadas
 timeout: '1200s'
