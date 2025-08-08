@@ -1,0 +1,56 @@
+# cloudbuild.yaml
+
+steps:
+  # 1) Build & push la imagen
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA'
+      - '.'
+
+images:
+  - 'gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA'
+
+  # 3) Deploy a Cloud Run con Cloud SQL y TODAS las env vars
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy ${_SERVICE} \
+          --image gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA \
+          --platform managed \
+          --region ${_REGION} \
+          --allow-unauthenticated \
+          --add-cloudsql-instances ${_PROJECT_ID}:${_REGION}:${_DB_INSTANCE} \
+          --update-secrets POSTGRES_PASSWORD=POSTGRES_PASSWORD_GAPPS:latest \
+          --set-env-vars \
+            SQLALCHEMY_DATABASE_URI=postgresql://${_POSTGRES_USER}:${_POSTGRES_PASSWORD}@${_POSTGRES_HOST}/${_POSTGRES_DB},\
+            RESET_DB=${_RESET_DB},\
+            VERSION=${_VERSION},\
+            POSTGRES_USER=${_POSTGRES_USER},\
+            POSTGRES_HOST=${_POSTGRES_HOST},\
+            POSTGRES_PASSWORD=${_POSTGRES_PASSWORD},\
+            POSTGRES_DB=${_POSTGRES_DB},\
+            GUNICORN_WORKERS=${_GUNICORN_WORKERS}
+
+# 4) Timeout ampliado para builds pesadas
+timeout: '1200s'
+
+substitutions:
+  # servicio Cloud Run
+  _SERVICE: 'gapps'
+  # región y proyecto
+  _REGION: 'europe-southwest1'
+  # instancia y credenciales Cloud SQL
+  _DB_INSTANCE: 'gapps-postgres'
+  _POSTGRES_USER: 'db1'
+  _POSTGRES_PASSWORD: 'db1'
+  _POSTGRES_DB: 'db1'
+  # Host para la conexión interna de Cloud Run a Cloud SQL
+  _POSTGRES_HOST: '/cloudsql/$PROJECT_ID:$REGION:$DB_INSTANCE'
+  # Otras vars de tu app
+  _RESET_DB: 'no'
+  _VERSION: '1.0.0'
+  _GUNICORN_WORKERS: '3'
