@@ -8,6 +8,12 @@
 #  - Resets the database if RESET_DB=yes
 #  - Can skip all checks if SKIP_INI_CHECKS=yes
 
+# Construct SQLAlchemy URI for Cloud SQL if applicable
+if [[ "${PGHOST}" == /cloudsql/* ]]; then
+  echo "[INFO] Cloud SQL environment detected. Building database URI."
+  export SQLALCHEMY_DATABASE_URI="postgresql+psycopg2://${PGUSER}:${PGPASSWORD}@/${PGDATABASE}?host=${PGHOST}"
+fi
+
 set -e  # Exit script immediately on failure
 
 PORT=${PORT:-5000}
