@@ -78,14 +78,17 @@ class UserFlow:
         if self.provider not in self.PROVIDERS:
             abort(422, "Invalid provider")
 
-    def handle_flow(self, attributes={}):
+    def handle_flow(self, attributes=None):
+        attributes = attributes or {}
         """Routes authentication based on flow type."""
         if self.flow_type == "login":
             return self._handle_login()
         elif self.flow_type == "register":
-            return self._handle_register(**attributes)
+            # register no necesita atributos externos
+            return self._handle_register()
         elif self.flow_type == "accept":
-            return self._handle_accept(**attributes)
+            # accept solo necesita el token de invitación
+            return self._handle_accept(attributes.get("token"))
         abort(403, "Invalid authentication flow")
 
     def _handle_login(self, user=None):
